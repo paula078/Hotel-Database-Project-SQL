@@ -1,0 +1,1102 @@
+	CREATE TABLE Rezerwacje (
+		Id_rezerwacji INT PRIMARY KEY IDENTITY (1,1),
+		Id_klienta INT NOT NULL,
+		Id_pokoju INT NOT NULL,
+		Id_pracownika INT NOT NULL,
+		Data_zameldowania DATE NOT NULL,
+		Data_wymeldowania DATE NOT NULL,
+		Id_miejsca INT, 
+		Rodzaj_wyżywienia NVARCHAR(50),
+		Ilosć_osób INT NOT NULL,
+		Cena_całkowita MONEY NOT NULL,
+		Rodzaj_płatności BIT NOT NULL
+	)
+
+	CREATE TABLE Pokoje (
+		Id_pokoju INT PRIMARY KEY,
+		Kategoria NVARCHAR(50) NOT NULL,
+		Stan_rezerwacji BIT NOT NULL,
+		Max_osób INT NOT NULL
+	)
+
+	ALTER TABLE Rezerwacje
+	ADD CONSTRAINT FK_Rezerwacje1 FOREIGN KEY (Id_pokoju) REFERENCES Pokoje(Id_pokoju)
+
+
+	CREATE TABLE [Rodzaj pokoju] (
+		Kategoria NVARCHAR(50) PRIMARY KEY,
+		[Cena/os/doba] MONEY NOT NULL,
+		Opis NVARCHAR(400)
+	) 
+	ALTER TABLE Pokoje
+	ADD CONSTRAINT FK_Pokoje FOREIGN KEY (Kategoria) REFERENCES [Rodzaj pokoju] (Kategoria)
+
+	CREATE TABLE [Zamówienia restauracji] (
+		Id_rezerwacji INT,
+		Nazwa_dania NVARCHAR(50),
+		Data_zamówienia DATE,
+		Ilość INT NOT NULL,        
+		Id_kucharza INT NOT NULL, 
+		Suma MONEY, 
+		PRIMARY KEY(Id_rezerwacji, Nazwa_dania, Data_zamówienia)
+	)
+
+	ALTER TABLE [Zamówienia restauracji] 
+	ADD CONSTRAINT FK_ZR4  FOREIGN KEY (Id_rezerwacji) REFERENCES Rezerwacje(Id_rezerwacji)
+
+
+	CREATE TABLE [Menu restauracji] (
+		Nazwa_dania NVARCHAR(50) PRIMARY KEY,
+		[Cena/szt] MONEY NOT NULL,
+		Rodzaj NVARCHAR(50) NOT NULL                                             
+	)
+
+	ALTER TABLE [Zamówienia restauracji] 
+	ADD CONSTRAINT FK_ZR2  FOREIGN KEY (Nazwa_dania) REFERENCES [Menu restauracji](Nazwa_dania)  
+
+	CREATE TABLE [Zarobek dzienny] (
+		Data DATE PRIMARY KEY,
+		Przychód MONEY NOT NULL,
+	)
+
+	ALTER TABLE Rezerwacje
+	ADD CONSTRAINT FK_Rezerwacje2 FOREIGN KEY (Data_wymeldowania) REFERENCES [Zarobek dzienny] (Data)
+
+	CREATE TABLE Klienci (
+		Id_klienta INT PRIMARY KEY IDENTITY(1,1),
+		Imię NVARCHAR(50) NOT NULL,
+		Nazwisko NVARCHAR(50) NOT NULL,
+		PESEL CHAR(20) UNIQUE NOT NULL,
+		Nr_telefonu NVARCHAR(50) NOT NULL,
+		[Adres_e-mail] NVARCHAR(50),
+		Kraj NVARCHAR(50) NOT NULL,
+		Miasto NVARCHAR(50) NOT NULL,
+		Adres_zamieszkania NVARCHAR(50) NOT NULL
+	)
+
+	ALTER TABLE Rezerwacje
+	ADD CONSTRAINT FK_Rezerwacje3 FOREIGN KEY (Id_klienta) REFERENCES Klienci (Id_Klienta)
+
+	CREATE TABLE Pracownicy (
+		Id_pracownika INT PRIMARY KEY IDENTITY(1,1),
+		Imię NVARCHAR(50) NOT NULL,
+		Nazwisko NVARCHAR(50) NOT NULL,
+		PESEL CHAR(20) UNIQUE NOT NULL,
+		Nr_telefonu NVARCHAR(50) NOT NULL,
+		[Adres_e-mail] NVARCHAR(50),
+		Data_urodzenia DATE NOT NULL,
+		Data_zatrudnienia DATE NOT NULL,
+		Adres_zamieszkania NVARCHAR(50) NOT NULL,
+		Stanowisko NVARCHAR(50) NOT NULL,
+		Premia DECIMAL(6,2)
+	)
+
+
+	ALTER TABLE Rezerwacje
+	ADD CONSTRAINT FK_Pracownicy FOREIGN KEY (Id_pracownika) REFERENCES Pracownicy(Id_pracownika)
+
+	ALTER TABLE [Zamówienia restauracji] 
+	ADD CONSTRAINT FK_ZR5  FOREIGN KEY (Id_kucharza) REFERENCES Pracownicy(Id_pracownika)
+
+	CREATE TABLE Stanowiska (
+		Stanowisko NVARCHAR(50) PRIMARY KEY,
+		[Liczba_godz/msc] INT NOT NULL,
+		Wynagrodzenie_podst MONEY NOT NULL
+	)
+
+	ALTER TABLE Pracownicy
+	ADD CONSTRAINT FK_Stanowiska FOREIGN KEY (Stanowisko) REFERENCES Stanowiska(Stanowisko)
+
+	CREATE TABLE Wyżywienie (
+		Rodzaj_wyżywienia NVARCHAR(50) PRIMARY KEY,
+		[Cena/dzień/osoba] MONEY NOT NULL,
+	)
+
+	ALTER TABLE Rezerwacje
+	ADD CONSTRAINT FK_Rezerwacje4 FOREIGN KEY (Rodzaj_wyżywienia) REFERENCES Wyżywienie(Rodzaj_wyżywienia)
+
+	CREATE TABLE Parking (
+		Id_miejsca INT PRIMARY KEY,
+		Id_rezerwacji INT DEFAULT NULL,
+		Stan_rezerwacji BIT NOT NULL, --0 WOLNE 1 ZAJĘTE?
+	)
+
+	ALTER TABLE Parking
+	ADD CONSTRAINT FK_Parking FOREIGN KEY (Id_rezerwacji) REFERENCES Rezerwacje(Id_rezerwacji)
+
+	CREATE TABLE Usługi (
+		Id_rezerwacji INT,
+		Nazwa_usługi NVARCHAR(50),
+		Data_rozpoczęcia DATE NOT NULL,
+		Liczba_godzin DECIMAL (3,1) NOT NULL,
+		Liczba_osób INT NOT NULL,
+		Suma MONEY,
+		PRIMARY KEY(Id_rezerwacji,Nazwa_usługi,Data_rozpoczęcia)
+	)
+
+	ALTER TABLE Usługi
+	ADD CONSTRAINT FK_Usługi FOREIGN KEY (Id_rezerwacji) REFERENCES Rezerwacje(Id_rezerwacji)
+
+	CREATE TABLE [Szczegóły usług] (
+		[Nazwa_usługi] NVARCHAR(50) PRIMARY KEY,
+		[Cena/godz] MONEY NOT NULL,
+		Opis NVARCHAR(256)
+	)
+
+	ALTER TABLE Usługi
+	ADD CONSTRAINT FK_Usługi2 FOREIGN KEY (Nazwa_usługi) REFERENCES [Szczegóły usług](Nazwa_usługi)
+
+	CREATE TABLE Rabaty (
+		Id_rezerwacji INT,
+		Kod INT,
+		Źródło NVARCHAR(50),
+		PRIMARY KEY(Id_rezerwacji,Kod)
+	)
+
+	ALTER TABLE Rabaty
+	ADD CONSTRAINT FK_Rabaty FOREIGN KEY (Id_rezerwacji) REFERENCES Rezerwacje(Id_rezerwacji)
+
+	CREATE TABLE [Informacje o rabatach] (
+		Kod INT PRIMARY KEY,
+		[Wysokość_rabatu(%)] FLOAT DEFAULT '0' NOT NULL,
+		Opis NVARCHAR(256)
+	)
+
+	ALTER TABLE Rabaty
+	ADD CONSTRAINT FK_Rabaty2 FOREIGN KEY (Kod) REFERENCES [Informacje o rabatach](Kod)
+
+	CREATE TABLE [Opinie klientów] (
+		Id_Opinii INT PRIMARY KEY IDENTITY(1,1),
+		Id_Klienta INT,
+		Id_pokoju INT,
+		Data DATE,
+		Ocena INT,
+		Komentarz NVARCHAR(256)
+	)
+
+	ALTER TABLE [Opinie klientów]
+	ADD CONSTRAINT FK_OK FOREIGN KEY (Id_Klienta) REFERENCES Klienci(Id_Klienta)
+
+	ALTER TABLE [Opinie klientów]
+	ADD CONSTRAINT FK_OK3 FOREIGN KEY (Id_pokoju) REFERENCES Pokoje(Id_pokoju)
+
+	-----------------------------------------------------------TABELE Z DANYMI POCZĄTKOWYMI----------------------------------------------------------------
+	INSERT INTO Wyżywienie VALUES
+	('Śniadanie',25),
+	('Obiad',40),
+	('Kolacja',28),
+	('Śniadanie+Obiad',55),
+	('Śniadanie+Kolacja',48),
+	('Obiad+Kolacja',64),
+	('Pełne wyżywienie',80)
+
+	INSERT INTO Stanowiska VALUES 
+	('Szef',94,15000),
+	('Manager',126,9500),
+	('Kucharz',140,6500),
+	('Sprzątacz',155,4750),
+	('Recepcjonista',130,5400),
+	('Złota rączka',85,5800),
+	('Ratownik', 100, 6000),
+	('Masażysta',70,6100)
+
+	INSERT INTO [Informacje o rabatach] VALUES
+	(1000,5,'Rabat wliczany jest do kosztów zamówień restauracji'),
+	(1001,10,'Rabat wliczany jest do kosztów zamówien restauracji'),
+	(1002,20,'Rabat wliczany jest do kosztów zamówień restauracji'),
+	(1003,25,'Rabat wliczany jest do kosztów zamówien restauracji'),
+	(1004,5,'Rabat wliczany jest do kosztów wszystkich dodatkowych usług'),
+	(1005,10,'Rabat wliczany jest do kosztów wszystkich dodatkowych usług'),
+	(1006,20,'Rabat wliczany jest do kosztów wszystkich dodatkowych usług')
+
+
+	INSERT INTO [Szczegóły usług] VALUES
+	('Basen',30,'Wyjątkowy basen i jacuzzi,
+	zlokalizowane są na najwyższych piętrach pięciogwiazdowego hotelu Karol&Paulina,
+	skąd roztacza się wspaniały widok na panoramę miasta, na wysokości około 150 metrów.'),
+	('Masaż relaksacyjny',180,'Głęboko relaksujący masaż
+	olejkiem – idealne rozwiązanie na zmęczenie, prawdziwa przyjemność dla ciała i ducha.'), 
+	('Masaż klasyczny',160,'Masaż tradycyjny – poprawia krążenia i uwalnia napięcie mięśniowe.'),
+	('Kręgielnia (1 tor)',145,'Udostępniamy jeden tor do gry z możliwością gry do 6 osób jednocześnie.
+	Buty do bowlingu wliczone w cenę.'),
+	('Minigolf',18,'Wyjątkowa atmosfera na nowo utworzonym polu do gry w minigolfa. Wiele poziomów, umożliwia granie 
+	wielu osobom jednocześnie. Podana cena jest ceną na osobę.') 
+	
+	INSERT INTO Parking VALUES
+	(1,NULL,1),
+	(2,NULL,1),
+	(3,NULL,0),
+	(4,NULL,0),
+	(5,NULL,0),
+	(6,NULL,0),
+	(7,NULL,0),
+	(8,NULL,0),
+	(9,NULL,0),
+	(10,NULL,0)
+
+	INSERT INTO [Rodzaj pokoju] VALUES    
+	('Standardowy',219 ,'W naszym pokoju standardowym znajduje się wszystko co jest potrzebne, aby zapewnić komfortowy pobyt i spokojny sen.To pokój z prywatną łazienką i podstawowym wyposażeniem (łóżko, stolik nocny, lampka nocna, szafa, biurko, mały telewizor). Pokój posiada również bezpłatny bezprzewodowy dostępem do Internetu.'),
+	('Biznesowy' , 249 ,'Pokój biznesowy to pomieszczenia urządzone z myślą o gościach odbywających podróże służbowe. Cechuje je nie tylko wysoki standard, ale również wyposażenie umożliwiające pracę biurową.'),
+	('Balkon&Widok',229 , 'Pokój Balkon&Widok posiada duży balkonem z któego można podziwiać wspaniałe widoki.'),
+	('De Luxe',329 ,' Kategoria pokoju hotelowego De Luxe ma wyższy standard niż pokój standardowy. Zagwarantowana jest większa powierzchnia pokoju, balkon, klimatyzacja, sejf, ekspres do kawy, nowoczesne wyposażenie. W łazience zaś znajdziemy zestawy hotelowych kosmetyków oraz wannę zamiast prysznica'),
+	('Ekonomiczny',199 ,' Kategoria pokoju Ekonomicznego ma niższy standard niż zwykły pokój. Pomieszczenie ma mniejszą powierzchnię oraz jest położone w budynku bocznym, w innej części hotelu, na parterze.')
+
+	INSERT INTO Pokoje VALUES 
+	(1, 'Standardowy', 0, 2),
+	(2, 'Standardowy', 0, 4),
+	(3, 'Biznesowy' , 0, 1),
+	(4, 'Biznesowy' , 0, 2),
+	(5, 'Balkon&Widok', 0, 2),
+	(6, 'Balkon&Widok', 0, 4),
+	(7, 'De Luxe', 0, 2),
+	(8, 'De Luxe', 0, 4),
+	(9, 'Ekonomiczny', 0, 3),
+	(10, 'Ekonomiczny', 0, 4)
+
+	INSERT INTO [Menu restauracji] VALUES
+	('Sniadanie w formie szwedzkiego stołu', 49.00, 'Sniadanie'),
+	('Krem z pomidorów', 19.00, 'Obiad'),
+	('Krem z dyni', 19.00, 'Obiad'),
+	('Rosół', 19.00, 'Obiad'),
+	('Czerwony barszcz', 19.00, 'Obiad'),
+	('Penne quattro formaggi', 28.00, 'Obiad'),
+	('Bazyliowe tagliatelle', 32.00, 'Obiad'),
+	('Kurczak Pizzayola', 49.00, 'Obiad'),
+	('Polędwiczka „Confit' , 79.00, 'Obiad'),
+	('Kaczka Barbarie', 75.00, 'Obiad'),
+	('Stek z polędwicy wołowe', 85.00, 'Obiad'),
+	('Łosoś', 59.00, 'Obiad'),
+	('Krewetki tygrysie', 62.00,'Obiad'),
+	('Sałatka owocowa', 22.00, 'Deser'),   
+	('Tiramisu', 26.00, 'Deser'),
+	('Lody z malinami', 25.00, 'Deser'),
+	('Tarta z jabłkami', 26.00, 'Deser')
+
+	INSERT INTO [Zarobek dzienny] VALUES
+	('2022-02-01',0),
+	('2022-02-02',0),
+	('2022-02-03',0),
+	('2022-02-04',0),
+	('2022-02-05',0),
+	('2022-02-06',0),
+	('2022-02-07',0),
+	('2022-02-08',0),
+	('2022-02-09',0),
+	('2022-02-10',0),
+	('2022-02-11',0),
+	('2022-02-12',0),
+	('2022-02-13',0),
+	('2022-02-14',0),
+	('2022-02-15',0),
+	('2022-02-16',0),
+	('2022-02-17',0),
+	('2022-02-18',0)
+
+	---------------------------------------------------------------PROCEDURY WSTAWIAJĄCE DANE--------------------------------------------------------------------------
+	GO
+	IF OBJECT_ID('dopUSŁ','P') IS NOT NULL
+	DROP PROC dopUSŁ
+	GO
+	CREATE PROC dopUSŁ(
+		@Id INT,
+		@Nazwa NVARCHAR(50),
+		@Data_rozp DATE,
+		@Godziny DECIMAL(3,1),
+		@Liczba_osób INT)
+
+	AS
+		IF NOT EXISTS (SELECT Id_rezerwacji FROM Rezerwacje
+					WHERE Id_rezerwacji = @Id)
+		BEGIN
+			RAISERROR('Rezerwacja o podanym id (%d) nie istnieje!',16,1,@Id)
+			RETURN(1)
+		END
+	
+		IF NOT EXISTS (SELECT Nazwa_usługi FROM [Szczegóły usług]
+						WHERE Nazwa_usługi = @Nazwa)
+		BEGIN 
+			RAISERROR('Podana usługa nie istnieje!',16,1)
+			RETURN(2)
+		END
+		
+		IF (@Data_rozp > (SELECT Data_wymeldowania FROM Rezerwacje
+							WHERE Id_rezerwacji = @Id))
+		BEGIN
+			RAISERROR('Usługa nie może się rozpoczynać po zakończeniu rezerwacji!',16,1)
+			RETURN(3)
+		END
+
+		IF (SELECT Ilosć_osób FROM Rezerwacje WHERE Id_rezerwacji = @Id)< @Liczba_osób
+		BEGIN
+			RAISERROR('Usługa nie może zostać wykupiona na więcej osób niż obejmuje dana rezerwacja!',16,1)
+			RETURN(4)
+		END
+	
+		DECLARE @Cenagodz MONEY
+		SET @Cenagodz = (SELECT [Cena/godz] FROM [Szczegóły usług] 
+						 WHERE Nazwa_usługi = @Nazwa)
+		DECLARE @Suma MONEY
+		IF(@Nazwa <> 'Kręgielnia (1 tor)')
+		BEGIN 
+			SET @Suma = @Cenagodz*@Godziny*@Liczba_osób 
+		END
+		ELSE
+		BEGIN
+			SET @Suma = @Cenagodz*@Godziny
+		END
+
+		INSERT INTO Usługi VALUES(@Id,@Nazwa,@Data_rozp,@Godziny,@Liczba_osób, @Suma)
+
+		RETURN(0)
+		GO
+
+	IF OBJECT_ID('dopPRAC','P') IS NOT NULL
+	DROP PROC dopPRAC
+	GO
+	CREATE PROC dopPRAC(
+		@Imie NVARCHAR(50),
+		@Nazwisko NVARCHAR(50) ,
+		@PESEL CHAR(20),
+		@Nrtel NVARCHAR(50),
+		@Adrese NVARCHAR(50),
+		@Datau DATE,
+		@Dataz DATE, 
+		@Adres NVARCHAR(50),
+		@Stanowisko NVARCHAR(50),
+		@Premia DECIMAL(6,2) =	NULL)
+	AS
+		IF (@Datau >= @Dataz)
+		BEGIN
+			RAISERROR('Nieprawidlowa data!',16,1)
+			RETURN(1)
+		END
+	
+		IF NOT EXISTS (SELECT Stanowisko FROM Stanowiska 
+						WHERE Stanowisko = @Stanowisko)
+		BEGIN
+			RAISERROR('Podane stanowisko nie istnieje!',16,1)
+			RETURN(2)
+		END 
+	
+		IF (LEN(@PESEL) <> 11)
+		BEGIN 
+			RAISERROR('Podany PESEL ma nieprawidłową długość!',16,1)
+			RETURN(3)
+		END
+		IF EXISTS (SELECT PESEL FROM Pracownicy WHERE PESEL = @PESEL)
+		BEGIN
+			RAISERROR('Osoba o podanym PESELU już istnieje w bazie!',16,1)
+			RETURN(4)
+		END
+		INSERT INTO dbo.Pracownicy VALUES(@Imie,@Nazwisko,@PESEL,@Nrtel,@Adrese,@Datau,@Dataz,@Adres,@Stanowisko,@Premia)
+
+		RETURN(0)
+	GO
+
+
+	IF OBJECT_ID('dopKLIEN','P') IS NOT NULL
+	DROP PROC dopKLIEN
+	GO
+	CREATE PROC dopKLIEN(
+		@Imie NVARCHAR(50),
+		@Nazwisko NVARCHAR(50) ,
+		@PESEL CHAR(20),
+		@Nrtel NVARCHAR(50),
+		@Adrese NVARCHAR(50),
+		@Kraj NVARCHAR(50),
+		@Miasto NVARCHAR(50), 
+		@Adres NVARCHAR(50))
+	AS
+		IF (LEN(@PESEL) <> 11)
+		BEGIN 
+			RAISERROR('Podany PESEL ma nieprawidłową długość!',16,1)
+			RETURN(1)
+		END
+		IF EXISTS (SELECT PESEL FROM dbo.Klienci WHERE PESEL = @PESEL)
+		BEGIN
+			RAISERROR('Osoba o podanym PESELU już istnieje w bazie!',16,1)
+			RETURN(2)
+		END
+		INSERT INTO dbo.Klienci VALUES(@Imie,@Nazwisko,@PESEL,@Nrtel,@Adrese,@Kraj,@Miasto,@Adres)
+
+		RETURN(0)
+		GO
+
+	IF OBJECT_ID('dopRABAT','P') IS NOT NULL
+	DROP PROC dopRABAT
+	GO
+	CREATE PROC dopRABAT(
+		@Id INT,
+		@Kod INT,
+		@Źródło NVARCHAR(50))
+	AS
+		IF NOT EXISTS (SELECT Id_rezerwacji FROM Rezerwacje
+					WHERE Id_rezerwacji = @Id)
+		BEGIN
+			RAISERROR('Rezerwacja o podanym id (%d) nie istnieje!',16,1,@Id)
+			RETURN(1)
+		END
+	
+		IF NOT EXISTS (SELECT Kod FROM [Informacje o rabatach]
+						WHERE Kod = @Kod)
+		BEGIN 
+			RAISERROR('Rabat o podanym kodzie nie istnieje',16,1)
+			RETURN(2)
+		END
+
+		INSERT INTO dbo.Rabaty VALUES(@Id,@Kod,@Źródło)
+		GO
+
+	
+	IF OBJECT_ID('dopREZ','P') IS NOT NULL
+	DROP PROC dopREZ
+	GO
+	CREATE PROC dopREZ(
+		@IdKlienta INT,
+		@IdPokoju INT,
+		@IdPracownika INT,
+		@DataZam DATE,
+		@DataWym DATE,
+		@RodzajWyż NVARCHAR(50),
+		@IlośćOs INT,                                                    
+		@RodzajPłatności BIT)
+	AS
+		IF NOT EXISTS (SELECT Id_klienta FROM Klienci
+					WHERE Id_klienta = @IdKlienta)
+		BEGIN
+			RAISERROR('Klient o podanym id (%d) nie istnieje w bazie, proszę najpierw uzupełnić dane klienta!',16,1, @IdKlienta)
+			RETURN(1)
+		END
+
+		IF NOT EXISTS (SELECT Id_pokoju FROM Pokoje
+					WHERE Id_pokoju = @IdPokoju)
+		BEGIN
+			RAISERROR('Pokój o podanym id (%d) nie istnieje!',16,1, @IdPokoju)
+			RETURN(2)
+		END
+
+		DECLARE @STAN_POKOJU BIT
+
+		SET @STAN_POKOJU = (SELECT P.Stan_rezerwacji FROM Pokoje P 
+		WHERE @IdPokoju = P.Id_pokoju)
+
+		IF @STAN_POKOJU <>0
+		BEGIN
+			RAISERROR('Pokój o podanym id (%d) jest zajęty!',16,1, @IdPokoju)
+			RETURN (3)
+		END
+
+		IF NOT EXISTS (SELECT Id_pracownika FROM Pracownicy
+					WHERE Id_pracownika = @IdPracownika AND Stanowisko = 'Recepcjonista')
+		BEGIN
+			RAISERROR('Pracownik o podanym id (%d) nie istnieje!',16,1, @IdPracownika)
+			RETURN(4)
+		END
+
+		IF (@DataWym < @DataZam)
+		BEGIN
+			RAISERROR('Data wymeldowania nie może nastąpić wcześniej niż data zameldowania!',16,1)
+			RETURN(5)
+		END
+
+		DECLARE @IdMiejsca INT
+		SET @IdMiejsca=(SELECT dbo.wolnyParking())
+		
+
+		IF NOT EXISTS (SELECT Rodzaj_wyżywienia FROM Wyżywienie
+					WHERE Rodzaj_wyżywienia = @RodzajWyż)
+		BEGIN
+			RAISERROR('Podane wyżywienie nie istnieje!',16,1)
+			RETURN(6)
+		END
+
+		IF @IlośćOs > (SELECT Max_osób FROM Pokoje WHERE Id_pokoju = @IdPokoju)
+		BEGIN
+			RAISERROR('Wybrany pokój ma mniejszy zakres osób!',16,1)
+			RETURN(7)
+		END
+		
+		DECLARE @CENA_POKOJU MONEY
+		DECLARE @CENA_WYŻYWIENIA MONEY
+		DECLARE @CenaCał MONEY
+		DECLARE @DNI INT
+
+		SET @DNI = (SELECT datediff(DD, @DataZam,@DataWym))
+
+
+		SET @CENA_POKOJU =(SELECT [Cena/os/doba] FROM [Rodzaj pokoju] RP JOIN Pokoje P
+		ON RP.Kategoria = P.Kategoria
+		WHERE @IdPokoju = P.Id_pokoju)
+
+		SET @CENA_WYŻYWIENIA =(SELECT W.[Cena/dzień/osoba] FROM [Wyżywienie] W 
+		WHERE @RodzajWyż = W.Rodzaj_wyżywienia)
+
+		SET @CenaCał = @IlośćOs * @CENA_POKOJU * @DNI  + @CENA_WYŻYWIENIA * @IlośćOs * @DNI
+
+		INSERT INTO Rezerwacje VALUES(@IdKlienta, @IdPokoju, @IdPracownika, @DataZam, @DataWym, @IdMiejsca, @RodzajWyż, @IlośćOs, @CenaCał, @RodzajPłatności)
+
+		RETURN(0)
+		GO
+
+	IF OBJECT_ID('dopZamRes','P') IS NOT NULL
+	DROP PROC dopZamRes
+	GO
+	CREATE PROC dopZamRes(
+		@Id INT,
+		@Nazwa NVARCHAR(50),
+		@Data_zam DATE,
+		@Ilość INT,
+		@Id_kucharza INT)
+
+	AS
+		IF NOT EXISTS (SELECT Id_rezerwacji FROM Rezerwacje
+					WHERE Id_rezerwacji = @Id)
+		BEGIN
+			RAISERROR('Rezerwacja o podanym id (%d) nie istnieje!',16,1,@Id)
+			RETURN(1)
+		END
+	
+		IF NOT EXISTS (SELECT Nazwa_dania FROM [Menu restauracji]
+						WHERE Nazwa_dania = @Nazwa)
+		BEGIN 
+			RAISERROR('Podane danie nie istnieje!',16,1)
+			RETURN(2)
+		END
+		
+		IF (@Data_zam > (SELECT Data_wymeldowania FROM Rezerwacje
+							WHERE Id_rezerwacji = @Id))
+		BEGIN
+			RAISERROR('Danie nie może zostać zakupione po zakończeniu rezerwacji!',16,1)
+			RETURN(3)
+		END
+
+		IF NOT EXISTS (SELECT Id_pracownika FROM Pracownicy
+						WHERE Id_pracownika = @Id_kucharza AND Stanowisko = 'Kucharz')
+		BEGIN 
+			RAISERROR('Kucharz o podanym id (%d) nie istnieje w bazie !',16,1, @Id_kucharza)
+			RETURN(4)
+		END
+		
+		DECLARE @Suma MONEY 
+		DECLARE @CENA MONEY
+
+		SET @CENA = (SELECT [Cena/szt] FROM [Menu restauracji] WHERE Nazwa_dania = @Nazwa)
+		SET @Suma = @Ilość * @CENA
+						
+	
+		INSERT INTO [Zamówienia restauracji] VALUES(@Id, @Nazwa, @Data_zam, @Ilość, @Id_kucharza, @Suma)
+
+		RETURN(0)
+		GO
+		IF OBJECT_ID('dopOPINIE','P') IS NOT NULL
+		DROP PROC dopOPINIE
+		GO
+		CREATE PROC dopOPINIE(
+		@Id_klienta INT,
+		@Id_pokoju INT,
+		@Data DATE,
+		@Ocena INT,
+		@Koment NVARCHAR(50))
+		AS
+		IF NOT EXISTS (SELECT Id_klienta FROM Klienci
+					WHERE Id_klienta = @Id_klienta)
+		BEGIN
+			RAISERROR('Klient o podanym id (%d) nie istnieje!',16,1, @Id_klienta)
+			RETURN(1)
+		END
+
+		IF NOT EXISTS (SELECT Id_pokoju FROM Pokoje
+					WHERE Id_pokoju = @Id_pokoju)
+		BEGIN
+			RAISERROR('Pokój o podanym id (%d) nie istnieje!',16,1, @Id_pokoju)
+			RETURN(2)
+		END
+
+		IF @Ocena < 0 OR @Ocena > 5
+		BEGIN
+			RAISERROR('Podano ocenę z poza zakresu!',16,1)
+			RETURN(3)
+		END
+
+		INSERT INTO dbo.[Opinie klientów] VALUES(@Id_klienta, @Id_pokoju, @Data, @Ocena, @Koment )
+		GO
+
+
+	----------------------------------------------------------PROCEDURY DODATKOWE----------------------------------------------------------------------------
+	
+	IF OBJECT_ID('Premia_dla_kucharza','P') IS NOT NULL
+	DROP PROC Premia_dla_kucharza
+	GO
+	CREATE PROC dbo.Premia_dla_kucharza
+	AS
+	BEGIN
+		DECLARE @ID INT
+		DECLARE @PREMIA DECIMAL(6,2)
+
+		SET @ID = (SELECT dbo.Najlepszy_Kucharz()) 
+		SET @PREMIA =(SELECT Premia FROM Pracownicy WHERE Id_pracownika = @ID) 
+
+		IF(@PREMIA >= 25 )
+		BEGIN 
+			RAISERROR('Premia ma już wartość maksymalną!',16,1)
+			RETURN(1)
+		END
+
+		UPDATE Pracownicy
+		SET Premia = Premia + 5
+		WHERE Id_pracownika = @ID
+		RETURN (0)
+	END
+	GO
+	IF OBJECT_ID('Dopisz_podliczenie','P') IS NOT NULL
+	DROP PROC Dopisz_podliczenie
+	GO
+	CREATE PROC dbo.Dopisz_podliczenie
+	( @Data DATE )
+	AS
+	BEGIN
+		DECLARE @Kwota MONEY
+		SET @Kwota = dbo.PodliczDzien(@Data)
+		UPDATE [Zarobek dzienny]
+		SET Przychód = @Kwota
+		WHERE Data = @Data
+
+		
+		UPDATE Pokoje
+		SET Stan_rezerwacji = 0
+		WHERE Id_pokoju IN (SELECT Id_pokoju FROM Rezerwacje WHERE Data_wymeldowania = @Data)
+		UPDATE Parking
+		SET Stan_rezerwacji = 0
+		WHERE Id_rezerwacji IN (SELECT Id_rezerwacji FROM Rezerwacje WHERE Data_wymeldowania = @Data)
+		UPDATE Parking
+		SET Id_rezerwacji = NULL
+		WHERE Stan_rezerwacji = 0
+
+		RETURN (0)
+	END
+	GO
+	---------------------------------------------------------------FUNKCJE---------------------------------------------------------------------------------------------
+	IF OBJECT_ID('PodliczDzien','FN') IS NOT NULL
+	DROP FUNCTION PodliczDzien
+	GO
+	CREATE FUNCTION dbo.PodliczDzien (@Data DATE)
+	RETURNS MONEY
+	AS
+	BEGIN
+		DECLARE @Suma MONEY
+		SET @Suma = 0
+		IF EXISTS (SELECT Data_Wymeldowania FROM Rezerwacje 
+					WHERE Data_Wymeldowania = @Data)
+		BEGIN
+			SET @Suma = @Suma + (SELECT	SUM(Cena_całkowita) FROM Rezerwacje
+									GROUP BY Data_Wymeldowania
+									HAVING Data_Wymeldowania = @Data)
+		END
+		RETURN @Suma
+	END
+	GO
+
+	IF OBJECT_ID('Ile_gości','FN') IS NOT NULL
+	DROP FUNCTION Ile_gości
+	GO
+	CREATE FUNCTION dbo.Ile_gości (@Data DATE)
+	RETURNS INT
+	AS
+	BEGIN
+		DECLARE @Osoby INT
+		SET @Osoby = 0
+
+		SET @Osoby = (SELECT SUM(Ilosć_osób) FROM Rezerwacje 
+				WHERE Data_wymeldowania >= @Data AND Data_zameldowania <= @Data)
+	
+	RETURN @Osoby
+	END
+	GO
+
+	IF OBJECT_ID('Najlepsze_danie','TF') IS NOT NULL
+	DROP FUNCTION Najlepsze_danie
+	GO
+	CREATE FUNCTION dbo.Najlepsze_danie ()
+	RETURNS @Tab TABLE (Nazwa_dania NVARCHAR(50))
+	AS
+	BEGIN
+		INSERT INTO @TAB SELECT T1.Nazwa_Dania FROM (
+		SELECT TOP 1 WITH TIES Nazwa_dania, COUNT(*) AS Liczba FROM [Zamówienia restauracji]
+					GROUP BY Nazwa_dania
+					ORDER BY Liczba DESC ) AS T1
+	RETURN
+	END
+	GO
+
+	IF OBJECT_ID('wolnyParking','FN') IS NOT NULL
+	DROP FUNCTION wolnyParking
+	GO
+	CREATE FUNCTION dbo.wolnyParking ()
+	RETURNS INT
+	AS
+	BEGIN
+		DECLARE @ID INT
+		DECLARE @STAN BIT
+		DECLARE @RETURNS_ID INT
+		DECLARE @FLAG BIT 
+
+		DECLARE K_PAR CURSOR
+		FOR SELECT Id_miejsca, Stan_rezerwacji FROM Parking
+		FOR READ ONLY
+
+		OPEN K_PAR
+		FETCH K_PAR INTO @ID, @STAN
+		
+		WHILE @@FETCH_STATUS=0 OR @FLAG = 0
+		BEGIN
+			IF @STAN != 1
+			BEGIN
+				SET @RETURNS_ID = @ID
+				SET @FLAG = 1
+			END
+
+			IF @FLAG =1
+			BREAK;
+
+			FETCH K_PAR INTO @ID, @STAN
+		END
+		CLOSE K_PAR
+		DEALLOCATE K_PAR
+		RETURN @RETURNS_ID 	
+	END
+	GO
+	IF OBJECT_ID('średnia_ocena_pokoju','FN') IS NOT NULL
+	DROP FUNCTION średnia_ocena_pokoju
+	GO
+	CREATE FUNCTION dbo.średnia_ocena_pokoju
+	(@Id_pokoju INT)
+	RETURNS FLOAT
+	AS
+	BEGIN 
+	DECLARE @ŚREDNIA_NA_POKÓJ FLOAT
+
+	SET @ŚREDNIA_NA_POKÓJ = (SELECT AVG( Ocena) FROM [Opinie klientów]
+	WHERE Id_pokoju = @Id_pokoju)
+	
+	RETURN @ŚREDNIA_NA_POKÓJ
+	END
+	GO
+
+	IF OBJECT_ID('średnia_ocena','FN') IS NOT NULL
+	DROP FUNCTION średnia_ocena
+	GO
+	CREATE FUNCTION dbo.średnia_ocena
+	()
+	RETURNS FLOAT
+	AS
+	BEGIN 
+	DECLARE @ŚREDNIA_CAŁKOWITA FLOAT
+
+	SET @ŚREDNIA_CAŁKOWITA = (SELECT AVG(Ocena) FROM [Opinie klientów])
+
+	RETURN @ŚREDNIA_CAŁKOWITA
+	END
+	GO
+
+	IF OBJECT_ID('Najlepszy_Kucharz','FN') IS NOT NULL
+	DROP FUNCTION Najlepszy_Kucharz
+	GO
+	CREATE FUNCTION dbo.Najlepszy_Kucharz ()
+	RETURNS INT
+	AS
+	BEGIN
+		DECLARE @ID INT
+		
+		SET @ID =(SELECT T1.Id_kucharza FROM
+			(SELECT TOP 1 Id_kucharza, COUNT(*) AS Ilość_dań FROM 
+			Pracownicy P JOIN [Zamówienia restauracji] ZR
+			ON P.Id_pracownika = ZR.Id_kucharza
+			GROUP BY Id_kucharza
+			ORDER BY Ilość_dań DESC) AS T1)
+
+			RETURN @ID
+	END
+	GO
+	IF OBJECT_ID('wolne_pokoje','TF') IS NOT NULL
+	DROP FUNCTION wolne_pokoje
+	GO
+	CREATE FUNCTION dbo.wolne_pokoje ()
+	RETURNS @Tab TABLE ( Id_pokoju INT)
+	AS
+	BEGIN 
+	INSERT INTO @Tab
+		SELECT Id_pokoju FROM Pokoje WHERE Stan_rezerwacji = 0
+	RETURN
+	END
+	GO
+	CREATE VIEW WIDOK AS (
+		SELECT P.Premia*S.Wynagrodzenie_podst*0.01 AS suma FROM Pracownicy P
+					JOIN Stanowiska S ON P.Stanowisko = S.Stanowisko )
+	GO
+	IF OBJECT_ID('Suma_premii','FN') IS NOT NULL
+	DROP FUNCTION Suma_premii
+	GO
+	CREATE FUNCTION dbo.Suma_premii ()
+	RETURNS MONEY
+	AS
+	BEGIN
+	DECLARE @SUMA MONEY
+				
+	SET @Suma = (SELECT SUM(suma) FROM WIDOK)	
+
+	RETURN @SUMA
+	END
+	GO
+
+	IF OBJECT_ID('Stopien_zapelnienia','FN') IS NOT NULL
+	DROP FUNCTION Stopien_zapelnienia
+	GO
+	CREATE FUNCTION dbo.Stopien_zapelnienia (@Data DATE)
+	RETURNS FLOAT
+	AS
+	BEGIN
+		DECLARE @Max FLOAT
+		DECLARE @Ilejest FLOAT
+		DECLARE @Procentowo FLOAT
+		SET @Max = (SELECT SUM(Max_osób) FROM Pokoje)
+		SET @Ilejest = (SELECT dbo.Ile_gości(@Data))
+
+		SET @Procentowo = @Ilejest/@Max * 100
+		RETURN @Procentowo 
+	END
+	GO
+
+
+
+	-----------------------------------------------------------------------------TRIGGERY----------------------------------------------------------------------------
+	
+	IF OBJECT_ID('zmienStanPokoju','TR') IS NOT NULL
+	DROP TRIGGER zmienStanPokoju 
+	GO
+	CREATE TRIGGER zmienStanPokoju ON Rezerwacje
+	AFTER INSERT
+	AS
+	DECLARE @IDpokoju INT
+	SET @IDpokoju = (SELECT Id_pokoju FROM inserted)
+
+	UPDATE Pokoje
+	SET Stan_rezerwacji = 1 
+	WHERE Pokoje.Id_pokoju = @IDpokoju 
+	GO
+	IF OBJECT_ID('zmienStanParkingu','TR') IS NOT NULL
+	DROP TRIGGER zmienStanParkingu 
+	GO
+	CREATE TRIGGER zmienStanParkingu ON Rezerwacje
+	AFTER INSERT
+	AS
+	DECLARE @IDmiejsca INT
+	SET @IDmiejsca = (SELECT Id_miejsca FROM inserted)
+
+	UPDATE Parking
+	SET Stan_rezerwacji = 1,Id_rezerwacji = (SELECT Id_rezerwacji FROM inserted)
+	WHERE Parking.Id_miejsca= @IDmiejsca
+
+	GO	
+	IF OBJECT_ID('odlicz_rabat_z_usługi','TR') IS NOT NULL
+	DROP TRIGGER odlicz_rabat_z_usługi
+	GO
+	CREATE TRIGGER odlicz_rabat_z_usługi ON Usługi
+	AFTER INSERT
+	AS
+	DECLARE @Id INT
+	SET @Id = (SELECT Id_rezerwacji FROM inserted)
+	DECLARE @Suma MONEY  = (SELECT Suma FROM inserted)
+
+	DECLARE @Kod INT
+	DECLARE @Wysokość_rabatu FLOAT
+	SET @Kod = (SELECT Kod FROM Rabaty
+					WHERE (SELECT Id_rezerwacji FROM inserted) = @Id)
+	SET @Wysokość_rabatu = (SELECT [Wysokość_rabatu(%)] FROM [Informacje o rabatach]
+								WHERE Kod = @Kod) * 0.01
+
+	IF EXISTS (SELECT Id_rezerwacji FROM Rabaty R JOIN [Informacje o rabatach] IOR -- JEŻELI MAMY RABAT NA REZERWACJE DO KTOREJ DOPISUJEMY USŁUGE
+				ON R.Kod = IOR.Kod												   -- ORAZ JEST TO RABAT NA STRICTE USŁUGI 
+				WHERE (Id_rezerwacji = @Id AND Opis LIKE '%usług%'))
+	BEGIN
+			SET @Suma = @Suma - @Suma * @Wysokość_rabatu
+			UPDATE Rezerwacje
+				SET Cena_całkowita = Cena_całkowita + @Suma
+				WHERE Rezerwacje.Id_rezerwacji = @Id 
+	END
+	ELSE
+	BEGIN
+			UPDATE Rezerwacje
+				SET Cena_całkowita = Cena_całkowita + @Suma 
+				WHERE Rezerwacje.Id_rezerwacji = @Id 
+	END
+
+	GO	
+	IF OBJECT_ID('odlicz_rabat_z_zamowien','TR') IS NOT NULL
+	DROP TRIGGER odlicz_rabat_z_zamowien
+	GO
+	CREATE TRIGGER odlicz_rabat_z_zamowien ON [Zamówienia restauracji]
+	AFTER INSERT
+	AS
+	DECLARE @Id INT
+	SET @Id = (SELECT Id_rezerwacji FROM inserted)
+	
+	DECLARE @Suma MONEY = (SELECT Suma FROM inserted)
+
+	DECLARE @Kod INT
+	DECLARE @Wysokość_rabatu FLOAT
+	SET @Kod = (SELECT Kod FROM Rabaty
+					WHERE (SELECT Id_rezerwacji FROM inserted) = @Id)
+	SET @Wysokość_rabatu = (SELECT [Wysokość_rabatu(%)] FROM [Informacje o rabatach]
+								WHERE Kod = @Kod) * 0.01
+		
+
+	IF EXISTS (SELECT Id_rezerwacji FROM Rabaty R JOIN [Informacje o rabatach] IOR
+				ON R.Kod = IOR.Kod												 
+				WHERE (Id_rezerwacji = @Id AND Opis LIKE '%restauracji%'))
+	BEGIN
+			SET @Suma = @Suma - @Suma * @Wysokość_rabatu
+			UPDATE Rezerwacje
+				SET Cena_całkowita = Cena_całkowita + @Suma
+				WHERE Rezerwacje.Id_rezerwacji = @Id 
+	END
+	ELSE
+	BEGIN
+			UPDATE Rezerwacje
+				SET Cena_całkowita = Cena_całkowita + @Suma 
+				WHERE Rezerwacje.Id_rezerwacji = @Id 
+	END
+	GO
+
+	
+	-----------------------------------------------------------------Przykładowe dane do prezentacji----------------------------------------------------------------------
+
+
+
+	/*
+
+	DELETE FROM klienci
+	DBCC CHECKIDENT ('Klienci', RESEED, 1);
+	GO */
+	EXECUTE dopKLIEN 'Aniela','Nowak','71083848122','+48 576719422','aniela.nowak@gmail.com','Polska','Wrocław','Strażacka 55a'
+	EXECUTE dopKLIEN 'Anton','Wiśniewski','70210664271','+48 643714426','anton.wis@gmail.com','Polska','Poznań','Aleja powstańców 3'
+	EXECUTE dopKLIEN 'Kacper','Zieliński','92040664353','+48 576797336','kacper.ziel@gmail.com','Polska','Wrocław','Szwedzka 42'
+	EXECUTE dopKLIEN 'Anton','Wiśniewski','75213668171','+48 453998432','antonio.wisniewski@gmail.com','Polska','Lublin','al.Jana Pawla II 4'
+	EXECUTE dopKLIEN 'John','Smith','89640600271','+43 80203009067','john3324@gmial.com','Wielka Brytania','Londyn','Sunstreet 5'
+	EXECUTE dopKLIEN 'Hans','Gebert','87452611859','+49 806734436899','hans.gebert40@gmail.com','Niemcy','Mainz','Jagerstrasse 42'
+	EXECUTE dopKLIEN 'Gabriel','Nowakowski','70643664271','+48 973577910','gabriel34@gmail.com','Polska','Kraków','Borsucza 2'
+	EXECUTE dopKLIEN 'Hanna','Piotrowska','94052698597','+48 342443426','hania.piotr3@gmail.com','Polska','Kraków','Piaskowa 54'
+	EXECUTE dopKLIEN 'Krzysztof','Dudek','00210664255','+48 906719006','krzysio23@gmail.com','Polska','Gdynia','Krawiecka 93/7a'
+	EXECUTE dopKLIEN 'Krzysztof','Jabłoński','70234665265','+48 434719426','krzyszjab@gmail.com','Polska','Zakpoane','Bolesława Chrobrego 6/3'
+	--SELECT * FROM Klienci
+
+ /*
+	DELETE FROM Pracownicy
+	DBCC CHECKIDENT ('Pracownicy', RESEED, 1);
+	GO */
+	EXECUTE dopPRAC 'Dariusz','Błądek','78134089434','+48 587722095','dar.blad@gmail.com','1978-08-03','2012-09-10','ul.Szwedzka 56 Kraków','Manager',5.0
+	EXECUTE dopPRAC 'Paweł','Chmiel','97845543553','+48 843222055','pawel.chmiel@gmail.com','1997-03-09','2016-07-09','ul.Strażacka 20 Kraśnik','Kucharz',10.0
+	EXECUTE dopPRAC 'Zenon','Walecki','69866283559','+48 324932435','zen.wal@gmail.com','1969-09-30','2014-09-09','ul.Wiejska 6b Kraków','Złota rączka',5.0
+	EXECUTE dopPRAC 'Tamara','Wojciechowska','87866382203','+48 222330435','tamara24@gmail.com','1987-01-31','2018-10-09','ul.Stanisława Nowaka 7 Kraków','Sprzątacz',0.0
+	EXECUTE dopPRAC 'Yuliet','Wavlova','90466283553','+52 234930037','yuwav3@gmail.com','1990-09-13','2019-02-09','ul.Bosacka 34/2 Kraków','Masażysta',0.0
+	EXECUTE dopPRAC 'Krystian','Bagiera','94106283313','+48 324932415','cristiano7@gmail.com','1994-02-27','2017-03-09','ul.Dietla 5 Bohnia','Kucharz',5.0
+	EXECUTE dopPRAC 'Paweł','Solecki','85866442553','+48 578921435','paweł.sol@gmail.com','1985-01-10','2013-09-03','ul.Ptasia 23 Wieliczka','Kucharz',0.0
+	EXECUTE dopPRAC 'Oliwier','Zapałka','01066283553','+48 354393249','oliwander30@gmail.com','2001-11-29','2016-02-13','al. Jana Pawła 33 Wieliczka','Ratownik',0.0
+	EXECUTE dopPRAC 'Ania','Trocka','96742230403','+48 231377435','aniatroc@gmail.com','1996-03-30','2019-01-03','ul.Miodowa 31 Kraków','Recepcjonista',5.0
+	EXECUTE dopPRAC 'Łukasz','Karolak','97696528323','+48 324932435','karolaklukas@gmail.com','1997-02-06','2018-03-09','ul.Pszczelna 72/2a Kraków','Recepcjonista',0.0
+	EXECUTE dopPRAC 'Jan','Barecki','76066283553','+48 700397560','jan.barecki@gmail.com','1976-10-19','2010-02-12','ul.Lipowa 32 Kraków','Szef',0.0
+	EXECUTE dopPRAC 'Wiktor','Zamojski','95066283553','+48 414393244','wiktorzamoy1@gmail.com','1995-01-02','2016-01-13','ul. Krakowska Bohnia','Sprzątacz',10.0
+	--SELECT * FROM Pracownicy
+
+	/*	DELETE FROM [Opinie klientów]
+		DBCC CHECKIDENT ('[Opinie klientów]', RESEED, 1);
+		GO */
+		EXEC dopOPINIE 1, 1, '2021-01-12', 4 ,'[komentarz klienta nr 1]'
+		EXEC dopOPINIE 3 ,1, '2022-02-22', 5 ,'[komentarz klienta nr 2]'
+		EXEC dopOPINIE 2, 4, '2021-01-13', 5 ,'[komentarz klienta nr 4]'
+		EXEC dopOPINIE 1, 5, '2022-02-15', 3 ,'[komentarz klienta nr 1]'
+		EXEC dopOPINIE 8, 8, '2022-03-25', 4 ,'[komentarz klienta nr 8]'
+		EXEC dopOPINIE 4, 5, '2022-10-14', 5 ,'[komentarz klienta nr 4]'
+		EXEC dopOPINIE 10, 2, '2022-06-06', 5 ,'[komentarz klienta nr 10]'
+		EXEC dopOPINIE 5, 6, '2022-02-08', 5 ,'[komentarz klienta nr 5]'
+		EXEC dopOPINIE 8, 7, '2022-01-24', 4 ,'[komentarz klienta nr 8]'
+		EXEC dopOPINIE 1, 8, '2022-01-06', 5 ,'[komentarz klienta nr 1]'
+
+		--SELECT * FROM [Opinie klientów]
+
+
+	/*DELETE FROM Rezerwacje
+	DBCC CHECKIDENT ('Rezerwacje', RESEED, 0);
+	GO*/
+	EXECUTE dopREZ 1, 3, 9, '2022-02-01', '2022-02-05', 'Śniadanie', 1, 0
+	EXECUTE dopREZ 2, 1, 9, '2022-02-04', '2022-02-08', 'Obiad', 2, 1
+	EXECUTE dopREZ 3, 6, 9, '2022-02-08', '2022-02-12', 'Śniadanie+Obiad', 4, 1
+	EXECUTE dopREZ 4, 7, 10, '2022-02-11', '2022-02-14', 'Śniadanie+Kolacja', 2, 0
+	EXECUTE dopREZ 5, 4, 10, '2022-02-12', '2022-02-17', 'Pełne wyżywienie', 2, 1
+	EXECUTE dopREZ 6, 9, 9, '2022-02-13', '2022-02-15', 'Obiad+Kolacja', 3, 0
+	EXECUTE dopREZ 7, 5, 10, '2022-02-16', '2022-02-18', 'Kolacja', 2, 1
+	
+	--SELECT * FROM Rezerwacje
+	--SELECT * FROM Pokoje
+	--SELECT * FROM Parking
+
+	--DELETE FROM Usługi
+	 
+	 EXECUTE dopUSŁ 1, 'Kręgielnia (1 tor)','2022-02-03',2,1
+	 EXECUTE dopUSŁ 1, 'Basen','2022-02-04',3,1
+	 EXECUTE dopUSŁ 2, 'Masaż relaksacyjny','2022-02-05',2,2
+	 EXECUTE dopUSŁ 2, 'Minigolf','2022-02-07',2,2
+	 EXECUTE dopUSŁ 3, 'Kręgielnia (1 tor)','2022-02-09',2,4
+	 EXECUTE dopUSŁ 3, 'Basen','2022-02-11',1,4
+	 EXECUTE dopUSŁ 4, 'Masaż relaksacyjny','2022-02-12',2,2
+	 EXECUTE dopUSŁ 5, 'Kręgielnia (1 tor)','2022-02-13',2,2
+	 EXECUTE dopUSŁ 6, 'Basen','2022-02-14',1,3
+	 EXECUTE dopUSŁ 7, 'Minigolf','2022-02-17',3,2
+
+	 --SELECT * FROM Usługi
+	-- SELECT * FROM Rezerwacje
+
+
+	--DELETE FROM [Zamówienia restauracji]
+	EXECUTE dopZamRes 1, 'Sniadanie w formie szwedzkiego stołu', '2022-02-02' , 1, 2
+	EXECUTE dopZamRes 2, 'Polędwiczka „Confit', '2022-02-06', 2, 6
+	EXECUTE dopZamRes 3, 'Sałatka owocowa', '2022-02-09', 3,7
+	EXECUTE dopZamRes 3, 'Penne quattro formaggi', '2022-02-10', 1, 2
+	EXECUTE dopZamRes 4, 'Krewetki tygrysie', '2022-02-11', 2, 6
+	EXECUTE dopZamRes 5, 'Krem z dyni', '2022-02-14', 1, 7
+	EXECUTE dopZamRes 6, 'Lody z malinami', '2022-02-14', 2, 2
+	EXECUTE dopZamRes 7, 'Stek z polędwicy wołowe', '2022-02-16', 1, 7
+	
+	--SELECT * FROM [Zamówienia restauracji]
+	--SELECT * FROM Rezerwacje
+	--SELECT * FROM Pracownicy
+
+
+	--DELETE FROM [Zarobek dzienny]
+	 EXEC Dopisz_podliczenie '2022-02-01'
+	 EXEC Dopisz_podliczenie '2022-02-02'
+	 EXEC Dopisz_podliczenie '2022-02-03'
+	 EXEC Dopisz_podliczenie '2022-02-04'
+	 EXEC Dopisz_podliczenie '2022-02-05'
+	 EXEC Dopisz_podliczenie '2022-02-06'
+	 EXEC Dopisz_podliczenie '2022-02-07'
+	 EXEC Dopisz_podliczenie '2022-02-08'
+	 EXEC Dopisz_podliczenie '2022-02-09'
+	 EXEC Dopisz_podliczenie '2022-02-10'
+	 EXEC Dopisz_podliczenie '2022-02-11'
+	 EXEC Dopisz_podliczenie '2022-02-12'
+	 EXEC Dopisz_podliczenie '2022-02-13'
+	 EXEC Dopisz_podliczenie '2022-02-14'
+	 EXEC Dopisz_podliczenie '2022-02-15'
+	 EXEC Dopisz_podliczenie '2022-02-16'
+	 EXEC Dopisz_podliczenie '2022-02-17'
+	 EXEC Dopisz_podliczenie '2022-02-18'
+
+	 --SELECT * FROM [Zarobek dzienny]
+
+
+	 EXEC dopRABAT 1,1002,'Stały klient'
+	 EXEC dopRABAT 4,1006,'Zwycięstwo w konkursie'
+	 EXEC dopRABAT 7,1002,'Świąteczna promocja'
+	 EXEC dopRABAT 1,1005,'Promocja na 10-lecie hotelu'
+	 EXEC dopRABAT 3,1005,'Promocja na 10-lecie hotelu'
+	-- SELECT * FROM Rabaty
