@@ -1,10 +1,10 @@
-# Hotel Database Project
+# 🏨 Hotel Database Project
 
-Welcome to the Hotel Database Project!
+### Welcome to the Hotel Database Project!🛎️
 
 This database project was executed as part of the Database Systems course at Jagiellonian University and was carried out in pairs.
 
-## Contents of the Database Description
+## Contents of the Database Description 📋
 
 ⮚ Basic assumptions and capabilities
 
