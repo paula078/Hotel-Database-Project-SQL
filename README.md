@@ -2,7 +2,10 @@
 
 ### Welcome to the Hotel Database Project!🛎️
 
-This database project was executed as part of the Database Systems course at Jagiellonian University and was carried out in pairs.
+This database project was executed as part of the Database Systems course at Jagiellonian University. 
+
+The project was done collaboratively with <a href="https://github.com/Karol0801">Karol0801</a>.
+
 
 ## Contents of the Database Description 📋
 
